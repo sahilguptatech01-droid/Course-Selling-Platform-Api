@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import {hash,compare} from "bcrypt";
 import  { authMiddleware } from "./middleware.ts";
 import type { AuthenticatedRequest } from "./middleware.ts";
+import { parse } from "node:path";
 
 
 
@@ -152,6 +153,65 @@ app.get('/courses',async(req,res)=>{
     })
 })
 
+// 4. **CreateLessonSchema**
+//     - title
+//     - content
+//     - courseId
+
+const CreateLessonSchema=z.object({
+    title:z.string(),
+    content:z.string(),
+    courseId:z.string()
+
+
+})
+app.post('/lessons',authMiddleware,async(req:AuthenticatedRequest,res)=>{
+    const parsedData=CreateLessonSchema.safeParse(req.body)
+    
+    if(!parsedData.success){
+        return res.json({
+            message:"Invaild schema"
+        })
+    }
+    const userRole=req.role
+    const userId=req.id
+    if(userRole==="INSTRUCTOR"&& userId){
+        const data=parsedData.data
+        const adminCourse=await prisma.course.findUnique({
+            where:{id:data.courseId},
+            select:{
+               instructorId:true
+            }
+        })
+        if(!adminCourse){
+            return res.json({
+                message:"Course does not exist"
+            })
+        }else{
+        const id=adminCourse.instructorId
+        if(id===userId){
+           const CreateLesson=await prisma.lesson.create({
+            data:{
+                title:data.title,
+                content:data.content,
+                courseId:data.courseId
+
+            }
+        })
+        return res.json({
+            message:"Lesson created successfully"
+        })
+        }
+    }
+        
+    }else{
+        return res.json({
+            message:"Invalid Request"
+        })
+    }
+  
+    
+})
 
 
 

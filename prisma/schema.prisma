@@ -38,5 +38,15 @@ model Course{
   instructorId String
   createdAt DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  lessons Lesson[]
 
+}
+
+model Lesson{
+  id String @id  @default(uuid())
+  title String
+  content String
+  course  Course @relation(fields:[courseId],references:[id])
+  courseId String
+  createdAt DateTime  @default(now())
 }
