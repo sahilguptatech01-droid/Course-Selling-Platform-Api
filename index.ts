@@ -2,6 +2,9 @@ import express from "express";
 import {z}  from "zod";
 import {prisma} from "./db.ts";
 import jwt from "jsonwebtoken";
+import {hash,compare} from "bcrypt";
+import  { authMiddleware } from "./middleware.ts";
+import type { AuthenticatedRequest } from "./middleware.ts";
 
 
 
@@ -14,11 +17,12 @@ const SignupSchema=z.object({
     email:z.email(),
     password:z.string().min(6),
     name:z.string(),
-    role:z.enum(["INSTRUCTOR","STUDENT"])
+    role:z.enum(["INSTRUCTOR","STUDENT"]).default("STUDENT")
 
 })
-app.post('/signup',async(req,res)=>{
+app.post('/auth/signup',async(req,res)=>{
     const result=SignupSchema.safeParse(req.body);
+    
     if(!result.success){
         res.status(400).json({
             message:"Invalid schema"
@@ -33,6 +37,7 @@ app.post('/signup',async(req,res)=>{
             })
         }
         else{
+      
             const user=await prisma.user.create({
                 data:result.data,
                 select:{
@@ -40,8 +45,6 @@ app.post('/signup',async(req,res)=>{
                     email:true,
                     role:true
                 }
-
-            
             })
               res.json({
                 message: "Signup successful",
@@ -58,7 +61,7 @@ const LoginSchema=z.object({
 
 })
 
-app.post("/login",async(req,res)=>{
+app.post("/auth/login",async(req,res)=>{
     const result=LoginSchema.safeParse(req.body);
        if(!result.success){
         res.status(400).json({
@@ -97,6 +100,51 @@ app.post("/login",async(req,res)=>{
 
 })
 
-    app.listen(3000, () => {
+
+const CreateCourseSchema=z.object({
+    title:z.string(),
+    description:z.string().optional(),
+    price:z.number().positive()
+})
+app.post("/courses",authMiddleware,async(req:AuthenticatedRequest,res)=>{
+    const userRole=req.role
+    const userId =req.id
+    const parsedData=CreateCourseSchema.safeParse(req.body)
+    if(!parsedData.success){
+        return res.json({})
+    }
+    if(userRole==="INSTRUCTOR"&& userId){
+        const data=parsedData.data;
+        const createCourse=await prisma.course.create({
+            data:{title:data.title,
+                description:data.description,
+                price:data.price,
+                instructorId:userId
+            },
+            select:{
+                title:true,
+                description:true,
+                price:true
+            }
+        })
+        return res.json({
+            course:{
+                createCourse
+            },
+            message:"Coures Created successful"
+        })
+    }
+    return res.json({
+        message:"Invalid Request"
+    })
+})
+
+
+
+
+
+app.listen(3000, () => {
   console.log("Server running on port 3000");
 });
+
+
