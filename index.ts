@@ -139,6 +139,19 @@ app.post("/courses",authMiddleware,async(req:AuthenticatedRequest,res)=>{
     })
 })
 
+app.get('/courses',async(req,res)=>{
+    const allCourses=await prisma.course.findMany({
+        select:{
+            title:true,
+            description:true,
+            price:true
+        }
+    }) 
+    return res.json({
+        courses:allCourses
+    })
+})
+
 
 
 
