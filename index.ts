@@ -153,11 +153,6 @@ app.get('/courses',async(req,res)=>{
     })
 })
 
-// 4. **CreateLessonSchema**
-//     - title
-//     - content
-//     - courseId
-
 const CreateLessonSchema=z.object({
     title:z.string(),
     content:z.string(),
@@ -209,8 +204,29 @@ app.post('/lessons',authMiddleware,async(req:AuthenticatedRequest,res)=>{
             message:"Invalid Request"
         })
     }
-  
-    
+
+
+})
+
+
+app.get('/courses/:courseId/lessons',async(req,res)=>{
+    const courseId=req.params.courseId
+    const allLesson=await prisma.lesson.findMany({
+        where:{courseId:courseId},
+        select:{
+            title:true,
+            course:{select:{title:true}
+            }
+        }
+        
+    })
+    const courseName=allLesson[0].course.title
+    const lessons=allLesson.map(l=>l.title)
+    return res.json({
+        "Course":courseName,
+        "lessons":lessons
+    })
+
 })
 
 
