@@ -112,7 +112,9 @@ app.post("/courses",authMiddleware,async(req:AuthenticatedRequest,res)=>{
     const userId =req.id
     const parsedData=CreateCourseSchema.safeParse(req.body)
     if(!parsedData.success){
-        return res.json({})
+        return res.json({
+            message:"Invalid schema"
+        })
     }
     if(userRole==="INSTRUCTOR"&& userId){
         const data=parsedData.data;
@@ -191,6 +193,51 @@ app.delete('/courses/:id',authMiddleware,async(req:AuthenticatedRequest,res)=>{
         })
     }
 })
+
+app.patch('/courses/:id',authMiddleware,async(req:AuthenticatedRequest,res)=>{
+    const parsedData=CreateCourseSchema.safeParse(req.body)
+        if(!parsedData.success){
+        return res.json({
+            message:"Invalid schema"
+        })
+    }else{
+    const data=parsedData.data;
+    const userId=req.id;
+    const userRole=req.role;
+    const courseId=req.params.id as string
+    if(userRole==="INSTRUCTOR"&& userId){
+           const course=await prisma.course.findMany({
+            where:{AND:[
+                {instructorId:userId},
+                {id:courseId}
+            ]}
+        })
+    if(course.length>0){
+        const updateCourse=await prisma.course.update({
+            where:{id:courseId},
+            data:{
+                title:data.title,
+                description:data.description,
+                price:data.price
+            }
+        })
+        return res.json({
+            message:"Updatad successfully"
+        })
+    }else{
+        return res.json({
+            message:"Course does not exist"
+
+        })
+    }
+    }else{
+        return res.json({
+            message:"Invalid Request"
+        })
+    }
+}
+})
+
 
 const CreateLessonSchema=z.object({
     title:z.string(),
