@@ -153,6 +153,45 @@ app.get('/courses',async(req,res)=>{
     })
 })
 
+app.delete('/courses/:id',authMiddleware,async(req:AuthenticatedRequest,res)=>{
+    const userId=req.id;
+    const userRole=req.role;
+    const courseId=req.params.id as string;
+    if(userRole==="INSTRUCTOR"&& userId){
+        const course=await prisma.course.findMany({
+            where:{AND:[
+                {instructorId:userId},
+                {id:courseId}
+            ]}
+        })
+        
+        if(course.length>0){
+            const deleteCourse=await prisma.$transaction([
+                prisma.lesson.deleteMany({
+                    where:{courseId:courseId}
+                }),
+                prisma.course.delete({
+                    where:{id:courseId}
+                }),
+                
+
+            ])
+            return res.json({
+                message:"Course deleted successfully"
+            })
+
+        }else{
+            return res.json({
+                message:"Course does not exist"
+            })
+        }
+    }else{
+        return res.json({
+            message:"Invalid request"
+        })
+    }
+})
+
 const CreateLessonSchema=z.object({
     title:z.string(),
     content:z.string(),
