@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import {hash,compare} from "bcrypt";
 import  { authMiddleware } from "./middleware.ts";
 import type { AuthenticatedRequest } from "./middleware.ts";
-import { parse } from "node:path";
+
 
 
 
@@ -316,6 +316,86 @@ app.get('/courses/:courseId/lessons',async(req,res)=>{
 })
 
 
+
+
+const  PurchaseCourseSchema=z.object({
+    courseId:z.string()
+})
+app.post('/purchase',authMiddleware,async(req:AuthenticatedRequest,res)=>{
+    const parsedData=PurchaseCourseSchema.safeParse(req.body)
+    const userId=req.id as string
+    const userRole=req.role 
+    if(!parsedData.success){
+        return res.json({
+            message:"Invalid schema"
+        })
+    }else{
+        const data=parsedData.data
+    try{
+        const purchase=await prisma.$transaction(async(tx)=>{
+            const existingPurchase=await tx.purchase.findFirst({
+                where:{
+                    AND:[
+                    {userId:userId,
+                    courseId:data.courseId
+                    }
+                ]}, 
+            })
+            if(existingPurchase){
+                throw new Error("Course already purchased")
+            }
+            const instructor=await tx.course.findFirst({
+                where:{AND:[
+                    {id:data.courseId},
+                    {instructorId:userId}
+                ]}
+            })
+            if(instructor){
+                throw new Error("You cannot purchase your own course")
+            }
+            await tx.purchase.create({
+                data:{
+                    userId:userId,
+                    courseId:data.courseId
+                }
+
+            })
+        },
+    {
+        maxWait:10000,
+        timeout:2000
+    })
+        return res.json({
+            message:"Course successfully purchased"
+    })
+    }catch(error){
+        if(error  instanceof Error){
+            return res.json({
+                success:false,
+                error:error.message
+            })
+    }}
+}
+})
+
+
+app.get('/users/:id/purchases',async(req,res)=>{
+    const userId =req.params.id as string
+    const allPurchase=await prisma.purchase.findMany({
+        where:{
+            userId:userId
+        },
+        select:{
+            course:{select:{title:true}}
+
+        }
+})
+const titles = allPurchase.map(item => item.course.title);
+return res.json({
+    message:"All your purchased",
+    courses:titles
+})
+})
 
 
 app.listen(3000, () => {
