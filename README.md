@@ -1,75 +1,77 @@
-## Course Selling App 
+# Course Selling App - Backend Integration Tests
 
-This repository contains **integration test cases** for a Course Selling backend application, written using **Bun’s test runner**.
-
-
+This repository contains robust integration test cases for a Course Selling backend application. The tests are written using **Bun’s native test runner** and validate the API endpoints, role-based authorization, and database integrity managed by **Prisma ORM**.
 
 ---
 
-## Test Coverage
+## 🚀 Features & Test Coverage
 
-✅ **Authentication**
+### ✅ Authentication & Authorization
+* **JWT Validation:** Secure signup, login, and token verification (`/me`).
+* **Role-Based Access Control (RBAC):** Strict separation between `Student` and `Instructor` actions.
+* **Ownership Enforcement:** Only the creator of a course/lesson can update or delete it.
 
-* Signup
-* Login
-* JWT validation
-* Protected routes (`/me`)
+### ✅ Course & Lesson Management
+* **Courses:** Create (Instructors only), read (Public), update, and delete (Owners only).
+* **Lessons:** Add and retrieve lessons linked to specific courses.
 
-✅ **Authorization (Role-based)**
-
-* Students cannot create courses or lessons
-* Instructors cannot purchase courses
-* Ownership enforcement for updates & deletes
-
-✅ **Courses**
-
-* Create course (Instructor only)
-* Get all courses (Public)
-* Get course by ID
-* Update & delete course (Owner only)
-
-✅ **Lessons**
-
-* Add lessons (Course instructor only)
-* Get lessons for a course (Public)
-
-✅ **Purchases**
-
-* Student purchases a course
-* Duplicate purchase prevention
-* User can view only their own purchases
-
-✅ **Negative & Edge Cases**
-
-* Forbidden access (`403`)
-* Unauthorized access (`401`)
-* Ownership violations
+### ✅ Purchase Flow
+* **Purchase Integrity:** Students can purchase courses; instructors cannot.
+* **Edge Cases:** Prevents duplicate purchases and enforces data privacy (users can only view their own purchases).
+* **HTTP Status Validation:** Strict assertion of `401 Unauthorized`, `403 Forbidden`, and `404 Not Found` codes.
 
 ---
 
-## Setup
+## 🛠️ Prerequisites
 
-Install dependencies:
+Ensure you have the following installed on your local machine:
+* [Bun](https://bun.sh) (v1.0 or higher)
+* PostgreSQL / MySQL / SQLite (depending on your Prisma setup)
 
+---
+
+## ⚙️ Setup & Installation
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/sahilguptatech01-droid/Course-Selling-Platform-Api.git
+cd course-selling-platform-api
+```
+
+### 2. Install Dependencies
 ```bash
 bun install
 ```
 
-Update backend URL if required:
+### 3. Environment Configuration
+Create a `.env` file in the root directory and add your database connection string and JWT secret:
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/course_db?schema=public"
+JWT_SECRET="your_super_secret_jwt_key"
+```
 
-```ts
+### 4. Database Migration & Prisma Client
+Generate the Prisma client and run migrations to set up your database schema:
+```bash
+# Generate Prisma Client
+bunx prisma generate
+
+# Run database migrations
+bunx prisma migrate dev --name init
+```
+
+---
+
+## 🧪 Running the Tests
+
+Before running the tests, make sure your backend server is active. If your server URL differs from the default, update the `BASE_URL` inside your test files:
+```typescript
 const BASE_URL = "http://localhost:3000";
 ```
 
 
----
-## Requirements Validated
 
-✅ JWT-based authentication
-✅ Role-based authorization (Student vs Instructor)
-✅ Ownership checks for courses & lessons
-✅ Purchase flow integrity
-✅ Correct HTTP status codes
-
----
-
+## 🛠️ Technology Stack
+* **Runtime:** [Bun](https://bun.sh)
+* **Database ORM:** [Prisma](https://prisma.io)
+* **Language:** TypeScript
