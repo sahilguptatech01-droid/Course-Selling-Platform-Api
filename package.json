@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run src/index.ts"
+    "dev": "bun run src/index.ts",
+    "postinstall": "bux --bun prisma generate"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
