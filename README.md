@@ -4,6 +4,50 @@ This repository contains robust integration test cases for a Course Selling back
 
 ---
 
+## API-ENDPOINTS
+
+* **POST**/auth/signup
+* **POST**/auth/login
+* **POST**/courses
+    * Only INSTRUCTOR can create courses
+* **GET**/courses
+    * Public Endpoints
+* **GET**/courses/:id
+    * Get all courses with all lessons
+* **PATCH**/courses/:id
+    * Only course instructor
+* **DELETE**/courses/:id
+   * Only course instructor
+* **GET**/courses/:courseId/lessons
+  * Public Endpoint
+* **POST**/lessons
+  * Create lessons ( Only instructor of the course) 
+* **POST**/purchases
+  * Student purchase a course
+* **GET**/users/:id/purchases
+  * Get all purchases courses of user
+
+
+ ## Required Schemas
+* SignupSchema
+    * email
+    * password (min 6 chars)
+    * name
+    * role
+* LoginSchema
+    * email
+    * password
+    * CreateCourseSchema
+    * title
+    * description
+    * price
+* CreateLessonSchema
+    * title
+    * content
+    * courseId
+* PurchaseCourseSchema
+    * courseId
+
 ## 🚀 Features & Test Coverage
 
 ### ✅ Authentication & Authorization
