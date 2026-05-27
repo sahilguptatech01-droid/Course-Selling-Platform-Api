@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 import {hash,compare} from "bcrypt";
 import  { authMiddleware } from "./middleware.ts";
 import type { AuthenticatedRequest } from "./middleware.ts";
+import cors from 'cors'
+import bcrypt from "bcrypt"
 
 
 
@@ -12,6 +14,7 @@ import type { AuthenticatedRequest } from "./middleware.ts";
 const app=express();
 app.use(express.json())
 
+app.use(cors())
 
 
 const SignupSchema=z.object({
@@ -32,15 +35,22 @@ app.post('/auth/signup',async(req,res)=>{
         const userExists=await prisma.user.findUnique({
             where:{email:result.data.email},
         })
+        
         if(userExists){
             return res.status(400).json({
                 message:"User already exists"
             })
         }
         else{
-      
+            const hashedPassword=await bcrypt.hash(result.data.password,10)
             const user=await prisma.user.create({
-                data:result.data,
+                data:{
+                    email:result.data.email,
+                    name:result.data.name,
+                    role:result.data.role,
+                    password:hashedPassword,
+                },
+
                 select:{
                     name:true,
                     email:true,
@@ -73,23 +83,27 @@ app.post("/auth/login",async(req,res)=>{
             const user=await prisma.user.findUnique({
                 where:{email:result.data.email}
             })
-           
             
-
+            
+            
+            
             if(user){
+                const comparePassword=await bcrypt.compare(result.data.password,user.password)
+                if(comparePassword){
               
-                const token=jwt.sign({
-                    "email":user.email,
-                    "id":user.id,
-                    "role":user.role
-                },
-                process.env.SECRET_KEY!
+                    const token=jwt.sign({
+                        "email":user.email,
+                        "id":user.id,
+                        "role":user.role
+                    },
+                    process.env.SECRET_KEY!
 
-                )
-                res.status(200).json({
-                    message:"Login successful",
-                    token:token
-                })
+                    )
+                    res.status(200).json({
+                        message:"Login successful",
+                        token:token
+                    })
+            }
             }
             else{
                 res.status(400).json({
